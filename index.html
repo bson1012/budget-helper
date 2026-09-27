@@ -175,7 +175,6 @@
                 <span id="syncText">클라우드 DB 동기화됨</span>
             </div>
 
-            <!-- Action Buttons -->
             <button onclick="openModal('budgetModal')" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-2 transition">
                 <i class="fa-solid fa-sliders text-amber-400"></i> 계정/예산 설정
             </button>
@@ -199,7 +198,6 @@
         </div>
 
         <div id="accountTilesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Account Cards -->
         </div>
     </section>
 
@@ -407,7 +405,7 @@
         </div>
     </section>
 
-    <!-- Modal: Budget & Account Settings -->
+    <!-- Modal: Budget & Account Settings (Modified with Budget Limit Editors) -->
     <div id="budgetModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="ha-card w-full max-w-2xl p-6 space-y-5 border-amber-500/50 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -528,7 +526,6 @@
         let accounts = [];
         let expenses = [];
         
-        // Cloud Sync Config (JSONBin.io)
         let cloudConfig = {
             binId: localStorage.getItem('NERP_BIN_ID') || '',
             apiKey: localStorage.getItem('NERP_API_KEY') || ''
@@ -550,7 +547,6 @@
             renderExpensesTable();
             calculateVatAndSupply();
 
-            // Auto poll cloud sync every 10 seconds if cloud is enabled
             if (cloudConfig.binId) {
                 setInterval(async () => {
                     await loadDataFromDB(true);
@@ -583,7 +579,6 @@
                 }
             }
 
-            // Fallback LocalStorage
             loadStateFromLocalStorage();
             updateSyncBadge(false, 'LocalStorage 모드');
         }
@@ -591,7 +586,6 @@
         async function saveDataToDB() {
             const payload = { accounts, expenses };
             
-            // Save local first
             localStorage.setItem('NERP_ACCOUNTS_v3', JSON.stringify(accounts));
             localStorage.setItem('NERP_EXPENSES_v3', JSON.stringify(expenses));
 
@@ -765,18 +759,40 @@
 
             accounts.forEach(acc => {
                 const item = document.createElement('div');
-                item.className = "flex items-center justify-between bg-slate-900 p-2.5 rounded border border-slate-800 text-xs";
+                item.className = "flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs gap-3";
                 item.innerHTML = `
-                    <div class="space-y-0.5">
+                    <div class="space-y-1 flex-1">
                         <div class="font-bold text-slate-200">${acc.name} <span class="font-mono text-slate-500">(${acc.code})</span></div>
-                        <div class="text-[11px] text-amber-400 font-mono-num">한도: ${formatKrw(acc.limit)}</div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] text-slate-400">예산한도:</span>
+                            <input type="number" id="limitInput_${acc.id}" value="${acc.limit}" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-amber-400 font-mono-num font-bold w-32 focus:border-amber-500 focus:outline-none">
+                            <button onclick="updateAccountLimit('${acc.id}')" class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded text-[11px] transition font-semibold">변경저장</button>
+                        </div>
                     </div>
-                    <button onclick="deleteAccount('${acc.id}')" class="px-2 py-1 bg-red-500/15 hover:bg-red-500/20 text-red-400 rounded text-[11px] transition">
+                    <button onclick="deleteAccount('${acc.id}')" class="px-2.5 py-1.5 bg-red-500/15 hover:bg-red-500/20 text-red-400 rounded text-[11px] transition">
                         삭제
                     </button>
                 `;
                 listContainer.appendChild(item);
             });
+        }
+
+        function updateAccountLimit(id) {
+            const inputEl = document.getElementById(`limitInput_${id}`);
+            const newLimit = parseFloat(inputEl.value);
+            if (isNaN(newLimit) || newLimit < 0) {
+                showToast("올바른 예산 금액을 입력하세요.");
+                return;
+            }
+
+            const acc = accounts.find(a => a.id === id);
+            if (acc) {
+                acc.limit = newLimit;
+                saveDataToDB();
+                renderAccountTiles();
+                renderManageAccountList();
+                showToast(`[${acc.name}] 예산 한도가 변경되었습니다.`);
+            }
         }
 
         function renderExpensesTable() {
