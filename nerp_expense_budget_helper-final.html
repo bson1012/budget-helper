@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERP Expense & Budget Helper</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace']
+                    },
+                    colors: {
+                        ha: {
+                            bg: '#101217',
+                            card: '#1a1d26',
+                            cardHover: '#222634',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            orange: '#ff9f0a',
+                            blue: '#0a84ff',
+                            mint: '#30d158',
+                            purple: '#bf5af2',
+                            cyan: '#64d2ff',
+                            red: '#ff453a',
+                            yellow: '#ffd60a',
+                            textMuted: '#94a3b8',
+                            textLight: '#f8fafc'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #101217;
+            color: #f8fafc;
+        }
+
+        /* Home Assistant Card Aesthetics */
+        .ha-card {
+            background-color: #1a1d26;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ha-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Custom Toggle Switch */
+        .ha-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .ha-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .ha-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .ha-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .ha-slider {
+            background-color: #30d158;
+        }
+
+        input:checked + .ha-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* HA Progress Bar */
+        .ha-progress-bg {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .ha-progress-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.4s ease-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #101217; }
+        ::-webkit-scrollbar-thumb { background: #2e3444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .ha-input {
+            background-color: #13151c;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #f8fafc;
+            border-radius: 12px;
+            padding: 8px 12px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .ha-input:focus {
+            border-color: #0a84ff;
+            box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.25);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#101217] text-slate-100">
+
+    <!-- Top HA Control Navigation Header -->
+    <header class="bg-[#141720] border-b border-white/10 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-40 shadow-xl">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 text-white flex items-center justify-center text-lg font-black shadow-lg shadow-orange-950/50">
+                <i class="fa-solid fa-house-signal"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-bold text-base text-white tracking-tight">NERP 경비 & 예산 관리 시스템</h1>
+                    <span class="bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold border border-amber-500/30">계정별 예산 전용</span>
+                </div>
+                <p class="text-xs text-slate-400 flex items-center gap-2">
+                    <span><i class="fa-regular fa-clock text-amber-400 mr-1"></i><span id="currentTimeDisplay">2026 KST</span></span>
+                    <span class="text-slate-600">•</span>
+                    <span class="text-emerald-400"><i class="fa-solid fa-shield-halved mr-1"></i>부가세 공제 / 불공제 가변 차감</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 text-xs">
+            <button onclick="openBudgetModal()" class="bg-[#222634] hover:bg-[#2c3142] text-amber-400 border border-amber-500/30 px-3 py-2 rounded-xl font-semibold flex items-center gap-2 transition active:scale-95 shadow">
+                <i class="fa-solid fa-sliders"></i> 계정별 예산 설정
+            </button>
+            <button onclick="exportToCSV()" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 px-3 py-2 rounded-xl font-semibold flex items-center gap-2 transition active:scale-95 shadow">
+                <i class="fa-solid fa-file-csv"></i> CSV 내보내기
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="flex-1 p-4 sm:p-6 max-w-[1600px] w-full mx-auto space-y-6">
+
+        <!-- SECTION 1: INDEPENDENT ACCOUNT BUDGET TILES -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-amber-400"></i> 계정별 예산 현황
+                    <span class="text-xs font-normal text-slate-400">(공급가액 / 불공제 포함 차감액 기준)</span>
+                </h2>
+                <button onclick="openBudgetModal()" class="text-xs text-amber-400 hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-pen-to-square"></i> 계정 예산 금액 수정
+                </button>
+            </div>
+
+            <!-- Dynamic Account Cards Grid -->
+            <div id="accountTilesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Dynamically rendered per-account tiles -->
+            </div>
+        </section>
+
+        <!-- SECTION 2: SMS PARSER & EXPENSE ENTRY FORM -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- Quick SMS Parser Tile -->
+            <div class="lg:col-span-4 ha-card p-5 space-y-3 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between border-b border-white/10 pb-2.5 mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <h3 class="font-bold text-sm text-white">카드 승인문자 / 카톡 파서</h3>
+                        </div>
+                        <span class="text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full">자동 입력</span>
+                    </div>
+
+                    <textarea id="quickSmsInput" rows="4" placeholder="복사한 승인 문자나 카카오톡 알림을 붙여넣으세요&#10;&#10;예: [삼성카드] 09/28 12:30 (주)맛있는식당 55,000원 승인 (12345678)" class="w-full text-xs p-3 bg-[#13151c] border border-white/10 rounded-xl focus:border-purple-500 focus:outline-none font-mono text-slate-200 resize-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <span class="text-[11px] text-slate-400">카드, 날짜, 금액, 승인번호 파싱</span>
+                    <button onclick="parseQuickSMS()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition active:scale-95 flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-bolt"></i> 분석 후 입력 폼 채우기
+                    </button>
+                </div>
+            </div>
+
+            <!-- Expense Entry Form Card -->
+            <div id="entryFormCard" class="lg:col-span-8 ha-card p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-pen-nib"></i>
+                        </div>
+                        <h3 id="formTitle" class="font-bold text-sm text-white">신규 경비 전표 입력</h3>
+                    </div>
+                    <button onclick="resetExpenseForm()" class="text-xs text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-rotate-left mr-1"></i>초기화
+                    </button>
+                </div>
+
+                <form id="expenseForm" onsubmit="handleFormSubmit(event)" class="space-y-3 text-xs">
+                    <input type="hidden" id="editingId" value="">
+
+                    <!-- Row 1: Account Selection & IsApplied Toggle -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-[#13151c] p-3 rounded-2xl border border-white/5">
+                        <div class="sm:col-span-8">
+                            <label class="block text-[11px] font-semibold text-slate-300 mb-1">
+                                처리 계정 (8자리 계정) <span class="text-amber-400">*</span>
+                            </label>
+                            <select id="inputAccount" required class="ha-input w-full font-medium">
+                                <!-- Dynamic options -->
+                            </select>
+                        </div>
+                        <div class="sm:col-span-4 flex items-center justify-between sm:justify-end gap-3 sm:pt-4">
+                            <span class="text-xs font-bold text-emerald-400">☑️ 예산 반영</span>
+                            <label class="ha-switch">
+                                <input type="checkbox" id="inputIsApplied" checked>
+                                <span class="ha-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Card & Date & Approval No -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-slate-300 font-semibold mb-1">사용 카드 <span class="text-amber-400">*</span></label>
+                            <select id="inputCard" required onchange="checkCustomCardOption()" class="ha-input w-full">
+                                <option value="하나카드">하나카드</option>
+                                <option value="삼성카드-국민행복">삼성카드-국민행복</option>
+                                <option value="삼성카드-마일리지">삼성카드-마일리지</option>
+                                <option value="삼성카드-신세계">삼성카드-신세계</option>
+                                <option value="삼성카드-iD">삼성카드-iD</option>
+                                <option value="__custom__">+ 기타 카드 직접입력...</option>
+                            </select>
+                            <input type="text" id="customCardInput" placeholder="카드명 입력" class="ha-input w-full mt-1 hidden">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 font-semibold mb-1">승인 날짜 <span class="text-amber-400">*</span></label>
+                            <input type="date" id="inputDate" required class="ha-input w-full font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 font-semibold mb-1">승인 번호 <span class="text-amber-400">*</span></label>
+                            <input type="text" id="inputApprovalNo" placeholder="예: 12345678" required class="ha-input w-full font-mono">
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Amount Split & VAT Deduction Mode -->
+                    <div class="bg-[#13151c] p-3.5 rounded-2xl border border-white/5 space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
+                            <span class="font-bold text-slate-200 text-xs">승인 금액 및 부가세 처리 구문</span>
+                            <!-- VAT Deduction Radio Toggle -->
+                            <div class="flex items-center gap-4 text-xs font-semibold">
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer text-emerald-400">
+                                    <input type="radio" name="vatDeductionRadio" value="DEDUCTIBLE" checked onchange="autoCalculateAmounts()" class="accent-emerald-500">
+                                    <span>부가세 공제 (기본)</span>
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-400">
+                                    <input type="radio" name="vatDeductionRadio" value="NON_DEDUCTIBLE" onchange="autoCalculateAmounts()" class="accent-amber-500">
+                                    <span>부가세 불공제 (전액 예산차감)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-slate-300 font-bold mb-1">총 승인금액 (VAT 포함) <span class="text-amber-400">*</span></label>
+                                <input type="number" id="inputTotalAmount" placeholder="0" required oninput="autoCalculateAmounts()" class="ha-input w-full font-mono font-bold text-amber-400">
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 mb-1">공급가액 (차감기준금액)</label>
+                                <input type="number" id="inputSupplyAmount" placeholder="0" oninput="manualSupplyChange()" class="ha-input w-full font-mono text-emerald-400 font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 mb-1">부가세</label>
+                                <input type="number" id="inputVatAmount" placeholder="0" readonly class="ha-input w-full font-mono text-slate-400 bg-slate-900/50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Merchant (Optional), BizNo (Optional), Description (Optional) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-slate-300 font-semibold mb-1">
+                                가맹점명 <span class="text-slate-500 font-normal">(선택 - 미입력시 '기본')</span>
+                            </label>
+                            <input type="text" id="inputMerchant" placeholder="미입력시 '기본' 자동설정" class="ha-input w-full">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 font-semibold mb-1">가맹점 사업자번호 <span class="text-slate-500 font-normal">(선택)</span></label>
+                            <input type="text" id="inputBizNo" maxlength="12" placeholder="000-00-00000" oninput="formatBizNoInput(this)" class="ha-input w-full font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 font-semibold mb-1">
+                                구매 내역 / 적요 <span class="text-slate-500 font-normal">(선택 - 미입력시 '기본')</span>
+                            </label>
+                            <input type="text" id="inputDescription" placeholder="미입력시 '기본' 자동설정" class="ha-input w-full">
+                        </div>
+                    </div>
+
+                    <!-- Form Action Submit -->
+                    <div class="pt-2 flex items-center justify-end gap-2">
+                        <button type="button" id="cancelEditBtn" onclick="resetExpenseForm()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl hidden">
+                            취소
+                        </button>
+                        <button type="submit" id="submitBtn" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-extrabold rounded-xl shadow-lg transition active:scale-95 flex items-center gap-2">
+                            <i class="fa-solid fa-check"></i> 경비 등록하기
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </section>
+
+        <!-- SECTION 3: NERP LEDGER TABLE GRID -->
+        <section class="ha-card p-5 space-y-4">
+            
+            <!-- Table Controls Header -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-emerald-400"></i>
+                    <h3 class="font-bold text-sm text-white">NERP 등록 경비 내역 목록</h3>
+                    <span id="ledgerCountBadge" class="bg-slate-800 text-slate-300 text-xs px-2 py-0.5 rounded-full font-mono">0건</span>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                        <input type="text" id="gridSearchInput" oninput="renderApp()" placeholder="가맹점/적요/승인번호 검색..." class="ha-input pl-8 py-1.5 w-44 sm:w-56 text-xs">
+                    </div>
+                    <select id="filterAccountSelect" onchange="renderApp()" class="ha-input py-1.5 text-xs">
+                        <option value="ALL">전체 계정</option>
+                    </select>
+                    <select id="filterAppliedSelect" onchange="renderApp()" class="ha-input py-1.5 text-xs">
+                        <option value="ALL">반영/미반영 전체</option>
+                        <option value="CHECKED">☑️ 예산 반영건만</option>
+                        <option value="UNCHECKED">⬜ 미반영 보류건만</option>
+                    </select>
+                    <button onclick="toggleAllCheckboxes(true)" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2.5 py-1.5 rounded-xl border border-white/5 font-semibold">
+                        전체 반영
+                    </button>
+                    <button onclick="toggleAllCheckboxes(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-400 px-2.5 py-1.5 rounded-xl border border-white/5 font-semibold">
+                        전체 해제
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[1000px] text-xs">
+                    <thead>
+                        <tr class="text-slate-400 border-b border-white/10 select-none">
+                            <th class="p-2.5 text-center w-10">#</th>
+                            <th class="p-2.5 text-center w-20">예산반영</th>
+                            <th class="p-2.5 w-24">승인일</th>
+                            <th class="p-2.5 w-36">처리 계정</th>
+                            <th class="p-2.5 w-32">사용 카드</th>
+                            <th class="p-2.5 w-40">가맹점 (사업자번호)</th>
+                            <th class="p-2.5 w-44">구매 내역 (적요)</th>
+                            <th class="p-2.5 text-center w-24">부가세 구분</th>
+                            <th class="p-2.5 text-right w-28">공급가액</th>
+                            <th class="p-2.5 text-right w-24">부가세</th>
+                            <th class="p-2.5 text-right w-28">총 승인금액</th>
+                            <th class="p-2.5 text-center w-24">NERP 작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledgerTableBody" class="divide-y divide-white/5 font-sans">
+                        <!-- Dynamic rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary Foot Bar -->
+            <div id="ledgerSummaryFoot" class="pt-3 border-t border-white/10 flex flex-wrap items-center justify-between text-xs text-slate-400 font-mono">
+                <!-- Dynamic summary -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL 1: ACCOUNT BUDGET SETTINGS MODAL -->
+    <div id="budgetModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="ha-card max-w-lg w-full overflow-hidden border border-white/10 shadow-2xl">
+            <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-[#141720]">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-amber-400"></i>
+                    <h3 class="font-bold text-sm text-white">계정별 예산 한도 설정</h3>
+                </div>
+                <button onclick="closeBudgetModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-3 max-h-[60vh] overflow-y-auto text-xs">
+                <p class="text-slate-400">
+                    각 계정의 정해진 <b>월 예산 금액</b>을 입력하세요.
+                </p>
+                <div id="budgetFormList" class="space-y-3">
+                    <!-- Dynamic inputs -->
+                </div>
+            </div>
+
+            <div class="px-5 py-3 bg-[#141720] border-t border-white/10 flex items-center justify-between text-xs">
+                <button onclick="restoreDefaultBudgets()" class="text-slate-400 hover:text-slate-200 underline">기본 계정 복원</button>
+                <div class="flex gap-2">
+                    <button onclick="closeBudgetModal()" class="px-4 py-2 bg-slate-800 text-slate-300 font-semibold rounded-xl">취소</button>
+                    <button onclick="saveBudgetsFromModal()" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl shadow">저장 적용</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: NERP TAB COPY MODAL -->
+    <div id="nerpCopyModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="ha-card max-w-md w-full overflow-hidden border border-emerald-500/30 shadow-2xl">
+            <div class="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-emerald-950/40">
+                <div class="flex items-center gap-2 text-emerald-400">
+                    <i class="fa-solid fa-circle-check text-base"></i>
+                    <h3 class="font-bold text-sm">NERP 탭 분리 데이터 복사 완료</h3>
+                </div>
+                <button onclick="closeNerpCopyModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-3 text-xs">
+                <p class="text-slate-300">
+                    클립보드에 <b>탭(Tab) 구분 전표 데이터</b>가 복사되었습니다. NERP 전표 입력 창이나 엑셀 시트에 `Ctrl+V`로 붙여넣으세요.
+                </p>
+                <div id="nerpCopyFormattedText" class="p-3 bg-[#13151c] border border-white/10 rounded-xl font-mono text-slate-200 space-y-1 select-all">
+                    <!-- JS filled -->
+                </div>
+            </div>
+
+            <div class="px-5 py-3 bg-[#141720] border-t border-white/10 flex justify-end">
+                <button onclick="closeNerpCopyModal()" class="px-5 py-2 bg-slate-200 text-slate-900 font-bold rounded-xl text-xs">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_ACCOUNTS = [
+            { id: '54030100', name: '회의비', code: '54030100', budget: 500000, icon: 'fa-comments' },
+            { id: '54030300', name: '회의비-조직', code: '54030300', budget: 1000000, icon: 'fa-users' },
+            { id: '54036900', name: '회의비-기타 (GWP)', code: '54036900', budget: 300000, icon: 'fa-mug-hot' },
+            { id: '54030100_hr', name: '회의비(인사팀)', code: '54030100', budget: 800000, icon: 'fa-id-card' }
+        ];
+
+        let accounts = [];
+        let expenses = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadInitialData();
+            setTodayDate();
+            renderAccountDropdowns();
+            renderApp();
+        });
+
+        function loadInitialData() {
+            const savedAcc = localStorage.getItem('nerp_ha_accounts_v2');
+            const savedExp = localStorage.getItem('nerp_ha_expenses_v2');
+
+            if (savedAcc) {
+                try { accounts = JSON.parse(savedAcc); } catch (e) { accounts = [...DEFAULT_ACCOUNTS]; }
+            } else {
+                accounts = [...DEFAULT_ACCOUNTS];
+                saveAccounts();
+            }
+
+            if (savedExp) {
+                try { expenses = JSON.parse(savedExp); } catch (e) { expenses = []; }
+            } else {
+                // Sample initial data demonstrating deductible vs non-deductible & optional defaults
+                expenses = [
+                    {
+                        id: 'exp_v2_1',
+                        accountId: '54030100',
+                        cardName: '하나카드',
+                        date: new Date().toISOString().split('T')[0],
+                        approvalNo: '98765432',
+                        totalAmount: 55000,
+                        vatDeduction: 'DEDUCTIBLE', // 공제
+                        supplyAmount: 50000,
+                        vatAmount: 5000,
+                        merchant: '(주)맛있는식당',
+                        bizNo: '123-45-67890',
+                        description: '팀원 주간 회의 식대',
+                        isApplied: true,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'exp_v2_2',
+                        accountId: '54030300',
+                        cardName: '삼성카드-마일리지',
+                        date: new Date().toISOString().split('T')[0],
+                        approvalNo: '11223344',
+                        totalAmount: 30000,
+                        vatDeduction: 'NON_DEDUCTIBLE', // 불공제
+                        supplyAmount: 30000,
+                        vatAmount: 0,
+                        merchant: '기본',
+                        bizNo: '',
+                        description: '기본',
+                        isApplied: true,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                saveExpenses();
+            }
+        }
+
+        function saveAccounts() { localStorage.setItem('nerp_ha_accounts_v2', JSON.stringify(accounts)); }
+        function saveExpenses() { localStorage.setItem('nerp_ha_expenses_v2', JSON.stringify(expenses)); }
+
+        function setTodayDate() {
+            document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        function renderAccountDropdowns() {
+            const select = document.getElementById('inputAccount');
+            const filterSelect = document.getElementById('filterAccountSelect');
+
+            select.innerHTML = '';
+            accounts.forEach(acc => {
+                const opt = document.createElement('option');
+                opt.value = acc.id;
+                opt.textContent = `${acc.name} (${acc.code})`;
+                select.appendChild(opt);
+            });
+
+            filterSelect.innerHTML = '<option value="ALL">전체 계정</option>';
+            accounts.forEach(acc => {
+                const opt = document.createElement('option');
+                opt.value = acc.id;
+                opt.textContent = `${acc.name} (${acc.code})`;
+                filterSelect.appendChild(opt);
+            });
+        }
+
+        function renderApp() {
+            renderAccountTiles();
+            renderLedgerTable();
+        }
+
+        function renderAccountTiles() {
+            const container = document.getElementById('accountTilesGrid');
+            container.innerHTML = '';
+
+            accounts.forEach(acc => {
+                let appliedDeductionSum = 0; // sum of supplyAmount for checked
+                let unappliedDeductionSum = 0; // sum of supplyAmount for unchecked
+
+                expenses.forEach(e => {
+                    if (e.accountId === acc.id) {
+                        const deductionVal = Number(e.supplyAmount) || 0; // for deductible = supply, for non-deductible = total
+                        if (e.isApplied) {
+                            appliedDeductionSum += deductionVal;
+                        } else {
+                            unappliedDeductionSum += deductionVal;
+                        }
+                    }
+                });
+
+                const budget = acc.budget || 0;
+                const remainingApplied = budget - appliedDeductionSum;
+                const potentialRemaining = budget - (appliedDeductionSum + unappliedDeductionSum);
+
+                const usagePct = budget > 0 ? Math.round((appliedDeductionSum / budget) * 100) : 0;
+                const potentialPct = budget > 0 ? Math.round(((appliedDeductionSum + unappliedDeductionSum) / budget) * 100) : 0;
+
+                let barColorClass = 'bg-emerald-500';
+                let textColorClass = 'text-emerald-400';
+                if (usagePct > 80 && usagePct <= 100) {
+                    barColorClass = 'bg-amber-500';
+                    textColorClass = 'text-amber-400';
+                } else if (usagePct > 100) {
+                    barColorClass = 'bg-rose-500';
+                    textColorClass = 'text-rose-400';
+                }
+
+                const tileHtml = `
+                    <div class="ha-card p-4 space-y-3 relative overflow-hidden flex flex-col justify-between">
+                        <!-- Card Header -->
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-200 flex items-center justify-center text-xs border border-white/5">
+                                    <i class="fa-solid ${acc.icon || 'fa-credit-card'}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-xs text-white leading-tight">${acc.name}</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">${acc.code}</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                                한도: ${budget.toLocaleString()}원
+                            </span>
+                        </div>
+
+                        <!-- Remaining Balance -->
+                        <div class="my-1">
+                            <div class="text-[10px] text-slate-400">현재 반영 잔여 예산</div>
+                            <div class="text-2xl font-black font-mono ${remainingApplied < 0 ? 'text-rose-400' : 'text-white'} tracking-tight">
+                                ${remainingApplied.toLocaleString()}원
+                            </div>
+                        </div>
+
+                        <!-- Usage Bar -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                                <span>반영 소진: <b class="${textColorClass}">${usagePct}%</b></span>
+                                <span>미반영 포함: <b>${potentialPct}%</b></span>
+                            </div>
+                            <div class="ha-progress-bg relative">
+                                <div class="ha-progress-fill ${barColorClass}" style="width: ${Math.min(usagePct, 100)}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sub Breakdown -->
+                        <div class="grid grid-cols-2 gap-1.5 pt-2 border-t border-white/5 text-[10px] text-slate-400 font-mono">
+                            <div>
+                                <span class="block text-slate-500">반영 차감액</span>
+                                <span class="font-bold text-emerald-400">${appliedDeductionSum.toLocaleString()}원</span>
+                            </div>
+                            <div>
+                                <span class="block text-slate-500">미반영 보류액</span>
+                                <span class="font-bold text-amber-400">${unappliedDeductionSum.toLocaleString()}원</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', tileHtml);
+            });
+        }
+
+        function renderLedgerTable() {
+            const tbody = document.getElementById('ledgerTableBody');
+            const searchVal = document.getElementById('gridSearchInput').value.toLowerCase().trim();
+            const filterAccount = document.getElementById('filterAccountSelect').value;
+            const filterApplied = document.getElementById('filterAppliedSelect').value;
+
+            const filtered = expenses.filter(item => {
+                const acc = accounts.find(a => a.id === item.accountId) || { name: '' };
+                const matchesSearch = !searchVal || 
+                    (item.merchant && item.merchant.toLowerCase().includes(searchVal)) ||
+                    (item.description && item.description.toLowerCase().includes(searchVal)) ||
+                    (item.approvalNo && item.approvalNo.toLowerCase().includes(searchVal)) ||
+                    acc.name.toLowerCase().includes(searchVal);
+
+                const matchesAcc = filterAccount === 'ALL' || item.accountId === filterAccount;
+                const matchesApplied = filterApplied === 'ALL' || 
+                    (filterApplied === 'CHECKED' && item.isApplied) ||
+                    (filterApplied === 'UNCHECKED' && !item.isApplied);
+
+                return matchesSearch && matchesAcc && matchesApplied;
+            });
+
+            document.getElementById('ledgerCountBadge').textContent = `${filtered.length}건`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="p-8 text-center text-slate-500">
+                            <i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>
+                            등록된 경비 내역이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('ledgerSummaryFoot').innerHTML = `<span>총 0건</span>`;
+                return;
+            }
+
+            let sumTotal = 0;
+            let sumSupply = 0;
+            let sumVat = 0;
+
+            tbody.innerHTML = filtered.map((item, idx) => {
+                const acc = accounts.find(a => a.id === item.accountId) || { name: '미지정', code: '-' };
+                
+                sumTotal += Number(item.totalAmount) || 0;
+                sumSupply += Number(item.supplyAmount) || 0;
+                sumVat += Number(item.vatAmount) || 0;
+
+                const opacityClass = item.isApplied ? '' : 'opacity-50 bg-slate-900/30';
+                const isDeductible = item.vatDeduction !== 'NON_DEDUCTIBLE';
+
+                return `
+                    <tr class="hover:bg-white/5 transition ${opacityClass}">
+                        <td class="p-2.5 text-center font-mono text-slate-500">${idx + 1}</td>
+                        <td class="p-2.5 text-center">
+                            <label class="ha-switch scale-75">
+                                <input type="checkbox" ${item.isApplied ? 'checked' : ''} onchange="toggleExpenseApplied('${item.id}', this.checked)">
+                                <span class="ha-slider"></span>
+                            </label>
+                        </td>
+                        <td class="p-2.5 font-mono text-slate-300">${item.date}</td>
+                        <td class="p-2.5 font-medium text-slate-200">
+                            ${acc.name} <span class="text-[10px] text-slate-400 font-mono">(${acc.code})</span>
+                        </td>
+                        <td class="p-2.5 text-slate-300">${item.cardName}</td>
+                        <td class="p-2.5">
+                            <div class="font-semibold text-white">${item.merchant || '기본'}</div>
+                            <div class="text-[10px] text-slate-500 font-mono">${item.bizNo || '-'}</div>
+                        </td>
+                        <td class="p-2.5 text-slate-300 truncate max-w-[160px]" title="${item.description}">${item.description || '기본'}</td>
+                        <td class="p-2.5 text-center">
+                            ${isDeductible 
+                                ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px]">공제</span>`
+                                : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px]">불공제</span>`
+                            }
+                        </td>
+                        <td class="p-2.5 text-right font-mono font-medium text-emerald-400">${Number(item.supplyAmount).toLocaleString()}원</td>
+                        <td class="p-2.5 text-right font-mono text-slate-500">${Number(item.vatAmount).toLocaleString()}원</td>
+                        <td class="p-2.5 text-right font-mono font-bold text-white">${Number(item.totalAmount).toLocaleString()}원</td>
+                        <td class="p-2.5 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="copyToNerp('${item.id}')" title="NERP 탭복사" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-2 py-1 rounded-lg font-semibold transition">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                                <button onclick="editExpense('${item.id}')" title="수정" class="text-slate-400 hover:text-amber-400 p-1">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="deleteExpense('${item.id}')" title="삭제" class="text-slate-400 hover:text-rose-400 p-1">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('ledgerSummaryFoot').innerHTML = `
+                <div>필터된 경비: <b>${filtered.length}건</b></div>
+                <div>차감기준금액 총계: <b class="text-emerald-400">${sumSupply.toLocaleString()}원</b> | 총 승인금액: <b class="text-white">${sumTotal.toLocaleString()}원</b></div>
+            `;
+        }
+
+        function autoCalculateAmounts() {
+            const total = parseFloat(document.getElementById('inputTotalAmount').value) || 0;
+            const vatMode = document.querySelector('input[name="vatDeductionRadio"]:checked').value;
+
+            if (total <= 0) {
+                document.getElementById('inputSupplyAmount').value = '';
+                document.getElementById('inputVatAmount').value = '';
+                return;
+            }
+
+            if (vatMode === 'NON_DEDUCTIBLE') {
+                // 부가세 불공제: 공급가액 = 총 금액, 부가세 = 0 (전액 예산에서 차감)
+                document.getElementById('inputSupplyAmount').value = total;
+                document.getElementById('inputVatAmount').value = 0;
+            } else {
+                // 부가세 공제: 공급가액 = 총 금액 / 1.1, 부가세 = 총 금액 - 공급가액
+                const supply = Math.round(total / 1.1);
+                const vat = total - supply;
+                document.getElementById('inputSupplyAmount').value = supply;
+                document.getElementById('inputVatAmount').value = vat;
+            }
+        }
+
+        function manualSupplyChange() {
+            const total = parseFloat(document.getElementById('inputTotalAmount').value) || 0;
+            const supply = parseFloat(document.getElementById('inputSupplyAmount').value) || 0;
+            document.getElementById('inputVatAmount').value = Math.max(0, total - supply);
+        }
+
+        function formatBizNoInput(input) {
+            let val = input.value.replace(/[^0-9]/g, '');
+            if (val.length > 10) val = val.substring(0, 10);
+            if (val.length > 5) {
+                input.value = `${val.substring(0, 3)}-${val.substring(3, 5)}-${val.substring(5)}`;
+            } else if (val.length > 3) {
+                input.value = `${val.substring(0, 3)}-${val.substring(3)}`;
+            } else {
+                input.value = val;
+            }
+        }
+
+        function checkCustomCardOption() {
+            const select = document.getElementById('inputCard');
+            const customInput = document.getElementById('customCardInput');
+            if (select.value === '__custom__') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        function parseQuickSMS() {
+            const txt = document.getElementById('quickSmsInput').value.trim();
+            if (!txt) return;
+
+            let foundCard = '';
+            let foundDate = '';
+            let foundAmount = 0;
+            let foundApprovalNo = '';
+            let foundMerchant = '';
+
+            if (txt.includes('하나')) foundCard = '하나카드';
+            else if (txt.includes('국민행복')) foundCard = '삼성카드-국민행복';
+            else if (txt.includes('마일리지')) foundCard = '삼성카드-마일리지';
+            else if (txt.includes('신세계')) foundCard = '삼성카드-신세계';
+            else if (txt.includes('iD') || txt.includes('아이디')) foundCard = '삼성카드-iD';
+            else if (txt.includes('삼성')) foundCard = '삼성카드-국민행복';
+
+            if (foundCard) {
+                document.getElementById('inputCard').value = foundCard;
+                checkCustomCardOption();
+            }
+
+            const amountMatch = txt.match(/([\d,]+)\s*원/);
+            if (amountMatch) {
+                foundAmount = parseInt(amountMatch[1].replace(/,/g, ''), 10);
+                if (!isNaN(foundAmount)) {
+                    document.getElementById('inputTotalAmount').value = foundAmount;
+                    autoCalculateAmounts();
+                }
+            }
+
+            const approvalMatch = txt.match(/(?:승인번호|승인|번호)[:\s]*([0-9]{6,9})/i) || txt.match(/\(([0-9]{6,9})\)/);
+            if (approvalMatch) {
+                foundApprovalNo = approvalMatch[1];
+                document.getElementById('inputApprovalNo').value = foundApprovalNo;
+            }
+
+            const currentYear = new Date().getFullYear();
+            const dateMatch1 = txt.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+            const dateMatch2 = txt.match(/(\d{1,2})[/.](\d{1,2})/);
+
+            if (dateMatch1) {
+                foundDate = `${dateMatch1[1]}-${String(dateMatch1[2]).padStart(2, '0')}-${String(dateMatch1[3]).padStart(2, '0')}`;
+            } else if (dateMatch2) {
+                foundDate = `${currentYear}-${String(dateMatch2[1]).padStart(2, '0')}-${String(dateMatch2[2]).padStart(2, '0')}`;
+            }
+
+            if (foundDate) document.getElementById('inputDate').value = foundDate;
+
+            let cleanStr = txt
+                .replace(/\[[^\]]+\]/g, '')
+                .replace(/(?:일시불|승인|취소|완료|원)/g, ' ')
+                .replace(/\d{1,2}\/\d{1,2}/g, ' ')
+                .replace(/\d{2}:\d{2}/g, ' ')
+                .replace(/([\d,]+)\s*원?/g, ' ')
+                .replace(/(?:승인번호|번호)[:\s]*[0-9]+/gi, ' ')
+                .replace(/\([0-9]+\)/g, ' ');
+
+            const words = cleanStr.split(/\s+/).filter(w => w.length >= 2 && !/^\d+$/.test(w));
+            if (words.length > 0) {
+                foundMerchant = words.join(' ');
+                document.getElementById('inputMerchant').value = foundMerchant;
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const editingId = document.getElementById('editingId').value;
+            const accountId = document.getElementById('inputAccount').value;
+
+            let cardName = document.getElementById('inputCard').value;
+            if (cardName === '__custom__') {
+                cardName = document.getElementById('customCardInput').value.trim() || '기타카드';
+            }
+
+            const date = document.getElementById('inputDate').value;
+            const approvalNo = document.getElementById('inputApprovalNo').value.trim();
+            const totalAmount = Number(document.getElementById('inputTotalAmount').value) || 0;
+            const vatDeduction = document.querySelector('input[name="vatDeductionRadio"]:checked').value;
+            const supplyAmount = Number(document.getElementById('inputSupplyAmount').value) || 0;
+            const vatAmount = Number(document.getElementById('inputVatAmount').value) || 0;
+
+            // Optional fields fallback to "기본" if blank
+            const merchantInput = document.getElementById('inputMerchant').value.trim();
+            const merchant = merchantInput.length > 0 ? merchantInput : '기본';
+
+            const bizNo = document.getElementById('inputBizNo').value.trim();
+
+            const descInput = document.getElementById('inputDescription').value.trim();
+            const description = descInput.length > 0 ? descInput : '기본';
+
+            const isApplied = document.getElementById('inputIsApplied').checked;
+
+            if (editingId) {
+                const index = expenses.findIndex(exp => exp.id === editingId);
+                if (index !== -1) {
+                    expenses[index] = {
+                        ...expenses[index],
+                        accountId, cardName, date, approvalNo, totalAmount, vatDeduction, supplyAmount, vatAmount, merchant, bizNo, description, isApplied
+                    };
+                }
+            } else {
+                const newExp = {
+                    id: 'exp_' + Date.now(),
+                    accountId, cardName, date, approvalNo, totalAmount, vatDeduction, supplyAmount, vatAmount, merchant, bizNo, description, isApplied,
+                    createdAt: new Date().toISOString()
+                };
+                expenses.unshift(newExp);
+            }
+
+            saveExpenses();
+            resetExpenseForm();
+            renderApp();
+        }
+
+        function resetExpenseForm() {
+            document.getElementById('expenseForm').reset();
+            document.getElementById('editingId').value = '';
+            document.getElementById('inputIsApplied').checked = true;
+            document.getElementById('formTitle').textContent = '신규 경비 전표 입력';
+            document.getElementById('submitBtn').innerHTML = `<i class="fa-solid fa-check"></i> 경비 등록하기`;
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('customCardInput').classList.add('hidden');
+            
+            // Default radio to DEDUCTIBLE
+            document.querySelector('input[name="vatDeductionRadio"][value="DEDUCTIBLE"]').checked = true;
+            setTodayDate();
+        }
+
+        function editExpense(id) {
+            const item = expenses.find(e => e.id === id);
+            if (!item) return;
+
+            document.getElementById('editingId').value = item.id;
+            document.getElementById('inputIsApplied').checked = item.isApplied !== false;
+            document.getElementById('inputAccount').value = item.accountId;
+
+            const cardSelect = document.getElementById('inputCard');
+            const cardOptions = Array.from(cardSelect.options).map(o => o.value);
+            if (cardOptions.includes(item.cardName)) {
+                cardSelect.value = item.cardName;
+                document.getElementById('customCardInput').classList.add('hidden');
+            } else {
+                cardSelect.value = '__custom__';
+                document.getElementById('customCardInput').classList.remove('hidden');
+                document.getElementById('customCardInput').value = item.cardName;
+            }
+
+            document.getElementById('inputDate').value = item.date;
+            document.getElementById('inputApprovalNo').value = item.approvalNo;
+            document.getElementById('inputTotalAmount').value = item.totalAmount;
+
+            const vatMode = item.vatDeduction || 'DEDUCTIBLE';
+            const radioEl = document.querySelector(`input[name="vatDeductionRadio"][value="${vatMode}"]`);
+            if (radioEl) radioEl.checked = true;
+
+            document.getElementById('inputSupplyAmount').value = item.supplyAmount;
+            document.getElementById('inputVatAmount').value = item.vatAmount;
+            document.getElementById('inputMerchant').value = item.merchant === '기본' ? '' : item.merchant;
+            document.getElementById('inputBizNo').value = item.bizNo || '';
+            document.getElementById('inputDescription').value = item.description === '기본' ? '' : item.description;
+
+            document.getElementById('formTitle').textContent = '경비 항목 수정';
+            document.getElementById('submitBtn').innerHTML = `<i class="fa-solid fa-check"></i> 수정 완료`;
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            window.scrollTo({ top: document.getElementById('entryFormCard').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        function deleteExpense(id) {
+            if (confirm('선택한 경비 항목을 삭제하시겠습니까?')) {
+                expenses = expenses.filter(e => e.id !== id);
+                saveExpenses();
+                renderApp();
+            }
+        }
+
+        function toggleExpenseApplied(id, isChecked) {
+            const item = expenses.find(e => e.id === id);
+            if (item) {
+                item.isApplied = isChecked;
+                saveExpenses();
+                renderApp();
+            }
+        }
+
+        function toggleAllCheckboxes(checkState) {
+            expenses.forEach(e => e.isApplied = checkState);
+            saveExpenses();
+            renderApp();
+        }
+
+        function copyToNerp(id) {
+            const item = expenses.find(e => e.id === id);
+            if (!item) return;
+
+            const acc = accounts.find(a => a.id === item.accountId) || { name: '미지정', code: '00000000' };
+            const tabSeparated = `${item.date}\t${acc.code}\t${acc.name}\t${item.cardName}\t${item.approvalNo}\t${item.merchant || '기본'}\t${item.bizNo || ''}\t${item.supplyAmount}\t${item.vatAmount}\t${item.totalAmount}\t${item.description || '기본'}`;
+
+            copyToClipboard(tabSeparated);
+
+            document.getElementById('nerpCopyFormattedText').innerHTML = `
+                <div><span class="text-slate-500">계정:</span> <strong class="text-amber-400">${acc.name} (${acc.code})</strong></div>
+                <div><span class="text-slate-500">승인일:</span> <span>${item.date}</span> | <span class="text-slate-500">카드:</span> <span>${item.cardName}</span></div>
+                <div><span class="text-slate-500">가맹점:</span> <strong>${item.merchant || '기본'}</strong> (${item.bizNo || '사업자번호 없음'})</div>
+                <div><span class="text-slate-500">차감 공급가:</span> <strong class="text-emerald-400">${Number(item.supplyAmount).toLocaleString()}원</strong> | VAT: ${Number(item.vatAmount).toLocaleString()}원</div>
+                <div><span class="text-slate-500">구분:</span> <span>${item.vatDeduction === 'NON_DEDUCTIBLE' ? '불공제 (전액차감)' : '공제'}</span> | <span class="text-slate-500">적요:</span> <span>${item.description || '기본'}</span></div>
+            `;
+            document.getElementById('nerpCopyModal').classList.remove('hidden');
+        }
+
+        function closeNerpCopyModal() { document.getElementById('nerpCopyModal').classList.add('hidden'); }
+
+        function copyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try { document.execCommand('copy'); } catch (err) { console.error(err); }
+            document.body.removeChild(textArea);
+        }
+
+        function exportToCSV() {
+            if (expenses.length === 0) return;
+
+            const headers = ['예산반영여부', '승인일', '계정코드', '계정명', '카드명', '승인번호', '가맹점명', '사업자번호', '부가세구분', '공급가액', '부가세', '총승인금액', '구매적요'];
+            const rows = expenses.map(item => {
+                const acc = accounts.find(a => a.id === item.accountId) || { name: '', code: '' };
+                return [
+                    item.isApplied ? '"Y"' : '"N"',
+                    `"${item.date}"`, `"${acc.code}"`, `"${acc.name}"`, `"${item.cardName}"`, `"${item.approvalNo}"`,
+                    `"${(item.merchant || '기본').replace(/"/g, '""')}"`, `"${item.bizNo || ''}"`,
+                    `"${item.vatDeduction === 'NON_DEDUCTIBLE' ? '불공제' : '공제'}"`,
+                    item.supplyAmount, item.vatAmount, item.totalAmount,
+                    `"${(item.description || '기본').replace(/"/g, '""')}"`
+                ].join(',');
+            });
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `NERP_Expense_Export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function openBudgetModal() {
+            const list = document.getElementById('budgetFormList');
+            list.innerHTML = '';
+
+            accounts.forEach((acc, idx) => {
+                const row = `
+                    <div class="bg-[#13151c] p-3 rounded-xl border border-white/5 space-y-1">
+                        <div class="flex justify-between font-bold text-slate-200">
+                            <span>${acc.name}</span>
+                            <span class="font-mono text-slate-400">${acc.code}</span>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="budgetInput_${idx}" value="${acc.budget}" class="ha-input w-full pr-8 font-mono font-bold text-amber-400">
+                            <span class="absolute right-3 top-2.5 text-slate-500">원</span>
+                        </div>
+                    </div>
+                `;
+                list.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.getElementById('budgetModal').classList.remove('hidden');
+        }
+
+        function closeBudgetModal() { document.getElementById('budgetModal').classList.add('hidden'); }
+
+        function saveBudgetsFromModal() {
+            accounts.forEach((acc, idx) => {
+                const inputVal = document.getElementById(`budgetInput_${idx}`).value;
+                acc.budget = Math.max(0, parseInt(inputVal, 10) || 0);
+            });
+
+            saveAccounts();
+            renderApp();
+            closeBudgetModal();
+        }
+
+        function restoreDefaultBudgets() {
+            if (confirm('기본 계정 설정 및 예산으로 되돌리시겠습니까?')) {
+                accounts = [...DEFAULT_ACCOUNTS];
+                saveAccounts();
+                openBudgetModal();
+                renderApp();
+            }
+        }
+    </script>
+</body>
+</html>
