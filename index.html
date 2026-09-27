@@ -53,7 +53,6 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* Home Assistant Card Styling */
         .ha-card {
             background-color: #1a1e24;
             border: 1px solid #2a303c;
@@ -67,7 +66,6 @@
             box-shadow: 0 6px 24px -2px rgba(0, 0, 0, 0.7);
         }
 
-        /* Custom Switch (ha-switch) */
         .ha-switch {
             position: relative;
             display: inline-block;
@@ -113,7 +111,6 @@
             background-color: #ffffff;
         }
 
-        /* Dual Layer Progress Bar */
         .ha-progress-container {
             position: relative;
             width: 100%;
@@ -148,21 +145,10 @@
             to { background-position: 0 0; }
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #101216;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #2a303c;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3b4354;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #101216; }
+        ::-webkit-scrollbar-thumb { background: #2a303c; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b4354; }
     </style>
 </head>
 <body class="p-3 sm:p-6 max-w-[1600px] mx-auto space-y-6 pb-20">
@@ -184,9 +170,9 @@
 
         <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-end">
             <!-- Sync Indicator Badge -->
-            <div id="syncBadge" class="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-medium">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span id="syncText">LocalStorage 동기화됨</span>
+            <div id="syncBadge" class="flex items-center gap-2 px-3 py-1.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-lg text-xs font-medium">
+                <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+                <span id="syncText">클라우드 DB 동기화됨</span>
             </div>
 
             <!-- Action Buttons -->
@@ -194,7 +180,7 @@
                 <i class="fa-solid fa-sliders text-amber-400"></i> 계정/예산 설정
             </button>
             <button onclick="openModal('cloudModal')" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-2 transition">
-                <i class="fa-solid fa-cloud text-sky-400"></i> DB/클라우드 연동
+                <i class="fa-solid fa-cloud text-sky-400"></i> DB/클라우드 설정
             </button>
             <button onclick="resetToDefaultData()" class="p-2 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-400 border border-slate-700 rounded-lg text-xs transition" title="초기화">
                 <i class="fa-solid fa-rotate-left"></i>
@@ -213,7 +199,7 @@
         </div>
 
         <div id="accountTilesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Account Cards will be dynamic here -->
+            <!-- Account Cards -->
         </div>
     </section>
 
@@ -225,14 +211,14 @@
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2 text-purple-400 font-semibold text-sm">
-                        <i class="fa-solid fa-[#message] fa-comment-sms text-base"></i>
+                        <i class="fa-solid fa-comment-sms text-base"></i>
                         <span>카드 승인문자 / 카톡 파서</span>
                     </div>
                     <span class="text-[11px] bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20">자동 추출</span>
                 </div>
                 <p class="text-xs text-slate-400 mb-3">승인 문자나 카카오톡 알림톡 전체를 복사하여 아래 붙여넣으면 가맹점, 금액, 승인번호, 날짜가 자동으로 파싱됩니다.</p>
                 
-                <textarea id="rawSmsInput" rows="5" placeholder="[하나카드] 09/18 19:30 경복궁 132,000원 일시불 승인번호 82910482&#10;또는 카톡 승인문자 텍스트를 붙여넣으세요..." 
+                <textarea id="rawSmsInput" rows="5" placeholder="[하나카드] 09/18 19:30 경복궁 132,000원 일시불 승인번호 82910482" 
                     class="w-full bg-slate-900/80 border border-slate-700/80 rounded-lg p-3 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition resize-none"></textarea>
             </div>
 
@@ -253,7 +239,6 @@
                     <i class="fa-solid fa-file-circle-plus text-amber-500"></i>
                     <span>신규 경비 전표 입력</span>
                 </div>
-                <!-- Budget Reflection Switch Toggle -->
                 <div class="flex items-center gap-2 bg-slate-900/70 px-3 py-1.5 rounded-lg border border-slate-800">
                     <span class="text-xs font-semibold text-slate-300">예산 반영</span>
                     <label class="ha-switch">
@@ -265,15 +250,12 @@
 
             <form id="expenseForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Account Selection -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">처리 계정 <span class="text-amber-500">*</span></label>
                         <select id="inputAccountId" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none font-medium">
-                            <!-- Account options will be injected dynamically -->
                         </select>
                     </div>
 
-                    <!-- Payment Card -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">사용 카드 <span class="text-amber-500">*</span></label>
                         <select id="inputCardName" required onchange="handleCardSelectChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none font-medium">
@@ -289,26 +271,22 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Approval Date -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">승인 날짜 <span class="text-amber-500">*</span></label>
                         <input type="date" id="inputApproveDate" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none font-mono-num">
                     </div>
 
-                    <!-- Approval Number -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">승인 번호 <span class="text-amber-500">*</span></label>
                         <input type="text" id="inputApproveNo" placeholder="예: 38291029" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none font-mono-num">
                     </div>
 
-                    <!-- Total Amount -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">총 승인금액 (원) <span class="text-amber-500">*</span></label>
                         <input type="number" id="inputTotalAmount" placeholder="0" required oninput="calculateVatAndSupply()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs font-bold text-amber-400 focus:border-amber-500 focus:outline-none font-mono-num">
                     </div>
                 </div>
 
-                <!-- VAT Deduction Type Radio Switch -->
                 <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800/80 space-y-2">
                     <label class="block text-xs font-semibold text-slate-400">부가세 구분 선택</label>
                     <div class="grid grid-cols-2 gap-3">
@@ -322,7 +300,6 @@
                         </label>
                     </div>
 
-                    <!-- Computed Breakdown Output -->
                     <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-center font-mono-num">
                         <div class="bg-slate-950/50 p-2 rounded">
                             <span class="block text-[10px] text-slate-500">공급가액</span>
@@ -340,26 +317,22 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Merchant Name -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">가맹점명</label>
                         <input type="text" id="inputMerchantName" placeholder="기본" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
 
-                    <!-- Merchant Biz No -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">가맹점 사업자번호</label>
                         <input type="text" id="inputMerchantBizNo" placeholder="000-00-00000" oninput="formatBizNumber(this)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none font-mono-num">
                     </div>
 
-                    <!-- Usage Memo -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">구매 내역 / 적요</label>
                         <input type="text" id="inputMemo" placeholder="기본" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
                 </div>
 
-                <!-- Submit Button -->
                 <div class="pt-2">
                     <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-lg shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition active:scale-[0.99]">
                         <i class="fa-solid fa-plus-circle"></i> NERP 경비 전표 추가 저장하기
@@ -371,7 +344,6 @@
 
     <!-- Registered Expense Table Section -->
     <section class="ha-card p-5 space-y-4 border-t-2 border-t-emerald-500">
-        <!-- Controls & Filters Bar -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-800">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-list-check text-emerald-400 text-lg"></i>
@@ -379,28 +351,23 @@
                 <span id="tableRecordCount" class="px-2 py-0.5 text-xs bg-slate-800 text-slate-400 rounded-full font-mono-num">0건</span>
             </div>
 
-            <!-- Filters -->
             <div class="flex flex-wrap items-center gap-2 text-xs">
-                <!-- Search Input -->
                 <div class="relative min-w-[180px]">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500"></i>
                     <input type="text" id="filterSearch" placeholder="가맹점/적요/승인번호..." oninput="renderExpensesTable()" 
                         class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500">
                 </div>
 
-                <!-- Account Filter -->
                 <select id="filterAccount" onchange="renderExpensesTable()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500">
                     <option value="ALL">전체 계정 보기</option>
                 </select>
 
-                <!-- Status Filter -->
                 <select id="filterReflected" onchange="renderExpensesTable()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500">
                     <option value="ALL">반영 여부 전체</option>
                     <option value="TRUE">예산 반영만</option>
                     <option value="FALSE">미반영 보류만</option>
                 </select>
 
-                <!-- Bulk Actions -->
                 <button onclick="toggleAllBudgetReflected(true)" class="px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg font-medium transition" title="전체 예산 반영">
                     <i class="fa-solid fa-check-double"></i> 전체 반영
                 </button>
@@ -408,7 +375,6 @@
                     <i class="fa-solid fa-xmark"></i> 전체 해제
                 </button>
                 
-                <!-- NERP Export Action Buttons -->
                 <button onclick="openNerpCopyModal()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg shadow transition flex items-center gap-1.5">
                     <i class="fa-solid fa-copy"></i> NERP 복사
                 </button>
@@ -418,7 +384,6 @@
             </div>
         </div>
 
-        <!-- Table Container -->
         <div class="overflow-x-auto rounded-lg border border-slate-800">
             <table class="w-full text-left text-xs text-slate-300">
                 <thead class="bg-slate-900/90 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider">
@@ -437,7 +402,6 @@
                     </tr>
                 </thead>
                 <tbody id="expenseTableBody" class="divide-y divide-slate-800/80">
-                    <!-- Dynamic Table Rows -->
                 </tbody>
             </table>
         </div>
@@ -465,7 +429,6 @@
                 </form>
 
                 <div class="max-h-60 overflow-y-auto space-y-2 pr-1" id="accountManageList">
-                    <!-- Dynamic Account items list -->
                 </div>
             </div>
 
@@ -486,7 +449,7 @@
                 <button onclick="closeModal('nerpCopyModal')" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <p class="text-xs text-slate-400">아래 텍스트 상자는 NERP 시스템 및 엑셀에 일괄 붙여넣기 할 수 있는 Tab 구분 데이터입니다. [클립보드 복사] 버튼을 눌러 바로 활용하세요.</p>
+            <p class="text-xs text-slate-400">아래 텍스트 상자는 NERP 시스템 및 엑셀에 일괄 붙여넣기 할 수 있는 Tab 구분 데이터입니다.</p>
 
             <textarea id="nerpTsvTextarea" rows="12" readonly class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs font-mono text-emerald-400 focus:outline-none select-all"></textarea>
 
@@ -502,42 +465,40 @@
         </div>
     </div>
 
-    <!-- Modal: Cloud Sync / Firebase / Google Sheets Setup -->
+    <!-- Modal: Cloud Sync / JSONBin Setup -->
     <div id="cloudModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="ha-card w-full max-w-md p-6 space-y-4 border-sky-500/50 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div class="flex items-center gap-2 text-sky-400 font-bold text-base">
                     <i class="fa-solid fa-cloud"></i>
-                    <span>클라우드 / Google Sheet DB 연동 설정</span>
+                    <span>무료 클라우드 DB 연동 설정</span>
                 </div>
                 <button onclick="closeModal('cloudModal')" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <p class="text-xs text-slate-400 leading-relaxed">
-                현재 데이터는 브라우저 <strong class="text-white">LocalStorage</strong>에 자동 저장됩니다. 조직원 간 실시간 실적 공유나 백업을 위해 Google Apps Script 웹앱 URL을 입력하세요.
+                모바일과 랩탑에서 실시간 데이터를 공유하려면 무료 <strong class="text-white">JSONBin.io</strong> Bin ID와 Master Key를 입력하세요. (미입력 시 LocalStorage 모드로 작동합니다.)
             </p>
 
             <div class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Google Apps Script Web App URL</label>
-                    <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">JSONBin Bin ID</label>
+                    <input type="text" id="jsonbinIdInput" placeholder="예: 650a... (Bin ID)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
                 </div>
-
-                <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800 space-y-1 text-[11px] text-slate-400">
-                    <div class="font-semibold text-sky-300"><i class="fa-solid fa-lightbulb"></i> 연결 안내</div>
-                    <p>Apps Script URL이 등록되면, 데이터 추가/수정 시 구글 시트 데이터베이스로 자동 동기화됩니다.</p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">JSONBin Master Key ($2a$...)</label>
+                    <input type="password" id="jsonbinKeyInput" placeholder="$2a$10$..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
-                <button onclick="saveGasSettings()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-lg">설정 저장</button>
+                <button onclick="saveCloudSettings()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-lg">연동 저장</button>
                 <button onclick="closeModal('cloudModal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg">닫기</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Default Accounts (Initial setup)
         const DEFAULT_ACCOUNTS = [
             { id: 'acc_1', name: '회의비', code: '54030100', limit: 500000 },
             { id: 'acc_2', name: '회의비-조직', code: '54030300', limit: 1000000 },
@@ -545,7 +506,6 @@
             { id: 'acc_4', name: '회의비 인사팀', code: '54030100', limit: 800000 }
         ];
 
-        // Sample initial expenses
         const DEFAULT_EXPENSES = [
             {
                 id: 'exp_101',
@@ -553,116 +513,126 @@
                 cardName: '삼성-iD',
                 approveDate: '2026-09-15',
                 approveNo: '38291029',
-                vatType: 'DEDUCTIBLE', // 부가세 공제
+                vatType: 'DEDUCTIBLE',
                 totalAmount: 55000,
                 supplyValue: 50000,
                 vatAmount: 5000,
-                deductAmount: 50000, // 예산 차감액 (공제: 공급가액)
+                deductAmount: 50000,
                 merchantName: '(주)스타벅스코리아',
                 merchantBizNo: '201-81-21515',
                 memo: '3분기 기획회의 음료',
                 budgetReflected: true
-            },
-            {
-                id: 'exp_102',
-                accountId: 'acc_2',
-                cardName: '하나',
-                approveDate: '2026-09-18',
-                approveNo: '82910482',
-                vatType: 'DEDUCTIBLE',
-                totalAmount: 132000,
-                supplyValue: 120000,
-                vatAmount: 12000,
-                deductAmount: 120000,
-                merchantName: '경복궁 식당',
-                merchantBizNo: '105-82-39201',
-                memo: '팀 주간 회식',
-                budgetReflected: true
-            },
-            {
-                id: 'exp_103',
-                accountId: 'acc_3',
-                cardName: '삼성-마일리지',
-                approveDate: '2026-09-22',
-                approveNo: '93810293',
-                vatType: 'NON_DEDUCTIBLE', // 부가세 불공제
-                totalAmount: 88000,
-                supplyValue: 88000,
-                vatAmount: 0,
-                deductAmount: 88000, // 예산 차감액 (불공제: 전액)
-                merchantName: '힐링워크숍',
-                merchantBizNo: '214-88-00129',
-                memo: '부서 GWP 행사 용품 구매',
-                budgetReflected: false // 미반영 보류
             }
         ];
 
-        // Application State
         let accounts = [];
         let expenses = [];
-        let gasScriptUrl = '';
+        
+        // Cloud Sync Config (JSONBin.io)
+        let cloudConfig = {
+            binId: localStorage.getItem('NERP_BIN_ID') || '',
+            apiKey: localStorage.getItem('NERP_API_KEY') || ''
+        };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            // Set default date input to today
+        window.addEventListener('DOMContentLoaded', async () => {
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('inputApproveDate').value = todayStr;
 
-            // Load data from LocalStorage or initialize with defaults
-            loadStateFromLocalStorage();
+            if (cloudConfig.binId) {
+                document.getElementById('jsonbinIdInput').value = cloudConfig.binId;
+                document.getElementById('jsonbinKeyInput').value = cloudConfig.apiKey;
+            }
 
-            // Initial Calculations & UI Rendering
+            await loadDataFromDB();
+
             renderAccountDropdowns();
             renderAccountTiles();
             renderExpensesTable();
             calculateVatAndSupply();
+
+            // Auto poll cloud sync every 10 seconds if cloud is enabled
+            if (cloudConfig.binId) {
+                setInterval(async () => {
+                    await loadDataFromDB(true);
+                }, 10000);
+            }
         });
+
+        async function loadDataFromDB(isBackground = false) {
+            if (cloudConfig.binId && cloudConfig.apiKey) {
+                try {
+                    const res = await fetch(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}/latest`, {
+                        headers: { 'X-Master-Key': cloudConfig.apiKey }
+                    });
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json.record) {
+                            accounts = json.record.accounts || DEFAULT_ACCOUNTS;
+                            expenses = json.record.expenses || DEFAULT_EXPENSES;
+                            updateSyncBadge(true, '클라우드 DB 동기화됨');
+                            if (!isBackground) {
+                                renderAccountDropdowns();
+                                renderAccountTiles();
+                                renderExpensesTable();
+                            }
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Cloud fetch error, fallback to local:", e);
+                }
+            }
+
+            // Fallback LocalStorage
+            loadStateFromLocalStorage();
+            updateSyncBadge(false, 'LocalStorage 모드');
+        }
+
+        async function saveDataToDB() {
+            const payload = { accounts, expenses };
+            
+            // Save local first
+            localStorage.setItem('NERP_ACCOUNTS_v3', JSON.stringify(accounts));
+            localStorage.setItem('NERP_EXPENSES_v3', JSON.stringify(expenses));
+
+            if (cloudConfig.binId && cloudConfig.apiKey) {
+                try {
+                    const res = await fetch(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': cloudConfig.apiKey
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        updateSyncBadge(true, '클라우드 DB 동기화됨');
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Cloud save error:", e);
+                }
+            }
+            updateSyncBadge(false, 'LocalStorage 모드');
+        }
 
         function loadStateFromLocalStorage() {
             try {
                 const savedAccounts = localStorage.getItem('NERP_ACCOUNTS_v3');
                 const savedExpenses = localStorage.getItem('NERP_EXPENSES_v3');
-                const savedGasUrl = localStorage.getItem('NERP_GAS_URL_v3');
-
-                if (savedAccounts) {
-                    accounts = JSON.parse(savedAccounts);
-                } else {
-                    accounts = [...DEFAULT_ACCOUNTS];
-                    saveAccountsToLocalStorage();
-                }
-
-                if (savedExpenses) {
-                    expenses = JSON.parse(savedExpenses);
-                } else {
-                    expenses = [...DEFAULT_EXPENSES];
-                    saveExpensesToLocalStorage();
-                }
-
-                if (savedGasUrl) {
-                    gasScriptUrl = savedGasUrl;
-                    document.getElementById('gasUrlInput').value = gasScriptUrl;
-                    updateSyncBadge(true, 'Google Sheet 연결됨');
-                }
+                accounts = savedAccounts ? JSON.parse(savedAccounts) : [...DEFAULT_ACCOUNTS];
+                expenses = savedExpenses ? JSON.parse(savedExpenses) : [...DEFAULT_EXPENSES];
             } catch (e) {
-                console.error("Failed to load local storage:", e);
                 accounts = [...DEFAULT_ACCOUNTS];
                 expenses = [...DEFAULT_EXPENSES];
             }
-        }
-
-        function saveAccountsToLocalStorage() {
-            localStorage.setItem('NERP_ACCOUNTS_v3', JSON.stringify(accounts));
-        }
-
-        function saveExpensesToLocalStorage() {
-            localStorage.setItem('NERP_EXPENSES_v3', JSON.stringify(expenses));
         }
 
         function resetToDefaultData() {
             if (confirm("모든 데이터를 초기 샘플 데이터로 리셋하시겠습니까?")) {
                 accounts = [...DEFAULT_ACCOUNTS];
                 expenses = [...DEFAULT_EXPENSES];
-                saveAccountsToLocalStorage();
-                saveExpensesToLocalStorage();
+                saveDataToDB();
                 renderAccountDropdowns();
                 renderAccountTiles();
                 renderExpensesTable();
@@ -679,12 +649,10 @@
             let deduct = 0;
 
             if (vatTypeRadio === 'DEDUCTIBLE') {
-                // 부가세 공제: 공급가액 = total / 1.1 (반올림), 부가세 = total - 공급가액
                 supply = Math.round(total / 1.1);
                 vat = total - supply;
-                deduct = supply; // 공제는 공급가액만 예산에서 차감
+                deduct = supply;
             } else {
-                // 부가세 불공제: 공급가액 = total, 부가세 = 0, 예산차감 = total전액
                 supply = total;
                 vat = 0;
                 deduct = total;
@@ -700,22 +668,12 @@
         function renderAccountTiles() {
             const container = document.getElementById('accountTilesGrid');
             container.innerHTML = '';
-
             document.getElementById('accountCountLabel').textContent = `${accounts.length}개 계정 등록됨`;
 
             accounts.forEach(acc => {
-                // Compute aggregated metrics for this account
                 const accExpenses = expenses.filter(e => e.accountId === acc.id);
-                
-                // Reflected deducted sum
-                const reflectedDeductSum = accExpenses
-                    .filter(e => e.budgetReflected)
-                    .reduce((sum, e) => sum + (e.deductAmount || 0), 0);
-
-                // Pending (unreflected) withheld sum
-                const pendingDeductSum = accExpenses
-                    .filter(e => !e.budgetReflected)
-                    .reduce((sum, e) => sum + (e.deductAmount || 0), 0);
+                const reflectedDeductSum = accExpenses.filter(e => e.budgetReflected).reduce((sum, e) => sum + (e.deductAmount || 0), 0);
+                const pendingDeductSum = accExpenses.filter(e => !e.budgetReflected).reduce((sum, e) => sum + (e.deductAmount || 0), 0);
 
                 const remainingBudget = acc.limit - reflectedDeductSum;
                 const totalConsumedWithPending = reflectedDeductSum + pendingDeductSum;
@@ -723,7 +681,6 @@
                 const reflectedPct = Math.min(Math.round((reflectedDeductSum / acc.limit) * 100) || 0, 100);
                 const pendingIncludedPct = Math.min(Math.round((totalConsumedWithPending / acc.limit) * 100) || 0, 100);
 
-                // Tile Color based on percentage
                 let colorThemeClass = 'text-emerald-400 bg-emerald-500';
                 if (reflectedPct >= 90) colorThemeClass = 'text-red-400 bg-red-500';
                 else if (reflectedPct >= 75) colorThemeClass = 'text-amber-400 bg-amber-500';
@@ -740,7 +697,6 @@
                             </span>
                         </div>
 
-                        <!-- Main Remaining Budget Display -->
                         <div class="pt-1">
                             <div class="text-[11px] text-slate-400">현재 반영 잔여 예산</div>
                             <div class="text-xl font-extrabold font-mono-num ${remainingBudget < 0 ? 'text-red-400' : 'text-amber-400'}">
@@ -748,7 +704,6 @@
                             </div>
                         </div>
 
-                        <!-- Progress Bar Container -->
                         <div class="space-y-1">
                             <div class="flex justify-between text-[11px] font-mono-num">
                                 <span class="text-slate-400">소진율: <strong class="text-white">${reflectedPct}%</strong></span>
@@ -760,7 +715,6 @@
                             </div>
                         </div>
 
-                        <!-- Breakdown Details -->
                         <div class="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-800/80 font-mono-num">
                             <div>
                                 <span class="text-slate-500 block text-[10px]">반영 차감액</span>
@@ -817,7 +771,7 @@
                         <div class="font-bold text-slate-200">${acc.name} <span class="font-mono text-slate-500">(${acc.code})</span></div>
                         <div class="text-[11px] text-amber-400 font-mono-num">한도: ${formatKrw(acc.limit)}</div>
                     </div>
-                    <button onclick="deleteAccount('${acc.id}')" class="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded text-[11px] transition">
+                    <button onclick="deleteAccount('${acc.id}')" class="px-2 py-1 bg-red-500/15 hover:bg-red-500/20 text-red-400 rounded text-[11px] transition">
                         삭제
                     </button>
                 `;
@@ -834,19 +788,15 @@
             const reflectedVal = document.getElementById('filterReflected').value;
 
             const filtered = expenses.filter(e => {
-                // Search filter
                 if (searchVal) {
                     const matchMerchant = (e.merchantName || '').toLowerCase().includes(searchVal);
                     const matchMemo = (e.memo || '').toLowerCase().includes(searchVal);
                     const matchApprove = (e.approveNo || '').toLowerCase().includes(searchVal);
                     if (!matchMerchant && !matchMemo && !matchApprove) return false;
                 }
-                // Account filter
                 if (accountVal !== 'ALL' && e.accountId !== accountVal) return false;
-                // Reflected filter
                 if (reflectedVal === 'TRUE' && !e.budgetReflected) return false;
                 if (reflectedVal === 'FALSE' && e.budgetReflected) return false;
-
                 return true;
             });
 
@@ -857,7 +807,7 @@
                     <tr>
                         <td colspan="11" class="text-center py-8 text-slate-500">
                             <i class="fa-solid fa-folder-open text-2xl mb-2 block"></i>
-                            등록된 경비 전표가 없거나 필터 조건과 일치하는 내역이 없습니다.
+                            등록된 경비 전표가 없습니다.
                         </td>
                     </tr>
                 `;
@@ -866,7 +816,6 @@
 
             filtered.forEach(exp => {
                 const acc = accounts.find(a => a.id === exp.accountId) || { name: '미지정', code: '000' };
-
                 const tr = document.createElement('tr');
                 tr.className = `hover:bg-slate-800/50 transition ${exp.budgetReflected ? '' : 'opacity-60 bg-slate-950/30'}`;
 
@@ -914,7 +863,7 @@
             const exp = expenses.find(e => e.id === id);
             if (exp) {
                 exp.budgetReflected = isReflected;
-                saveExpensesToLocalStorage();
+                saveDataToDB();
                 renderAccountTiles();
                 renderExpensesTable();
             }
@@ -922,7 +871,7 @@
 
         function toggleAllBudgetReflected(status) {
             expenses.forEach(e => e.budgetReflected = status);
-            saveExpensesToLocalStorage();
+            saveDataToDB();
             renderAccountTiles();
             renderExpensesTable();
             showToast(status ? "전체 예산 반영 처리되었습니다." : "전체 예산 해제 처리되었습니다.");
@@ -930,7 +879,6 @@
 
         function handleFormSubmit(event) {
             event.preventDefault();
-
             const calc = calculateVatAndSupply();
             if (calc.total <= 0) {
                 showToast("총 승인금액을 1원 이상 입력하세요.");
@@ -960,12 +908,11 @@
             };
 
             expenses.unshift(newExp);
-            saveExpensesToLocalStorage();
+            saveDataToDB();
 
             renderAccountTiles();
             renderExpensesTable();
 
-            // Reset Form fields except account and card
             document.getElementById('inputTotalAmount').value = '';
             document.getElementById('inputApproveNo').value = '';
             document.getElementById('inputMerchantName').value = '';
@@ -978,7 +925,7 @@
 
         function deleteExpense(id) {
             expenses = expenses.filter(e => e.id !== id);
-            saveExpensesToLocalStorage();
+            saveDataToDB();
             renderAccountTiles();
             renderExpensesTable();
             showToast("경비 전표가 삭제되었습니다.");
@@ -1002,15 +949,9 @@
 
             if (!name || !code || limit <= 0) return;
 
-            const newAcc = {
-                id: 'acc_' + Date.now(),
-                name,
-                code,
-                limit
-            };
-
+            const newAcc = { id: 'acc_' + Date.now(), name, code, limit };
             accounts.push(newAcc);
-            saveAccountsToLocalStorage();
+            saveDataToDB();
 
             document.getElementById('newAccountName').value = '';
             document.getElementById('newAccountCode').value = '';
@@ -1028,7 +969,7 @@
                 return;
             }
             accounts = accounts.filter(a => a.id !== id);
-            saveAccountsToLocalStorage();
+            saveDataToDB();
             renderAccountDropdowns();
             renderAccountTiles();
             renderExpensesTable();
@@ -1042,53 +983,31 @@
                 return;
             }
 
-            // 1. Amount Extraction (Look for comma numbers followed by 원 or 000원)
             let amount = 0;
             const amountMatch = rawText.match(/([\d,]+)\s*원/);
             if (amountMatch) {
                 amount = parseInt(amountMatch[1].replace(/,/g, ''), 10);
-            } else {
-                // Fallback numeric extraction
-                const nums = rawText.match(/[\d,]{4,}/g);
-                if (nums && nums.length > 0) {
-                    amount = parseInt(nums[0].replace(/,/g, ''), 10);
-                }
             }
 
-            // 2. Approval Number Extraction (6 to 8 consecutive digits)
             let approveNo = '';
             const approveMatch = rawText.match(/(?:승인번호|승인|번호)?\s*[:\[\s]*(\d{6,8})[\]\s]*/i);
             if (approveMatch) {
                 approveNo = approveMatch[1];
             }
 
-            // 3. Date Extraction (MM/DD or MM-DD)
             let approveDate = new Date().toISOString().split('T')[0];
             const dateMatch = rawText.match(/(\d{2})[\/\.-](\d{2})/);
             if (dateMatch) {
                 const year = new Date().getFullYear();
-                const month = dateMatch[1].padStart(2, '0');
-                const day = dateMatch[2].padStart(2, '0');
-                approveDate = `${year}-${month}-${day}`;
+                approveDate = `${year}-${dateMatch[1].padStart(2, '0')}-${dateMatch[2].padStart(2, '0')}`;
             }
 
-            // 4. Card Name Detection
-            if (rawText.includes('하나')) {
-                document.getElementById('inputCardName').value = '하나';
-            } else if (rawText.includes('iD') || rawText.includes('아이디')) {
-                document.getElementById('inputCardName').value = '삼성-iD';
-            } else if (rawText.includes('마일리지')) {
-                document.getElementById('inputCardName').value = '삼성-마일리지';
-            } else if (rawText.includes('신세계')) {
-                document.getElementById('inputCardName').value = '삼성-신세계';
-            } else if (rawText.includes('국민행복')) {
-                document.getElementById('inputCardName').value = '삼성-국민행복';
-            }
+            if (rawText.includes('하나')) document.getElementById('inputCardName').value = '하나';
+            else if (rawText.includes('iD')) document.getElementById('inputCardName').value = '삼성-iD';
+            else if (rawText.includes('마일리지')) document.getElementById('inputCardName').value = '삼성-마일리지';
 
-            // 5. Merchant Name Heuristic Extraction
             let merchant = '';
             const tokens = rawText.split(/\s+/);
-            // Try to find token without numbers or keywords
             for (let t of tokens) {
                 if (!t.includes('원') && !t.includes('카드') && !t.includes('승인') && !t.match(/\d/) && t.length >= 2) {
                     merchant = t.replace(/[\[\]()]/g, '');
@@ -1096,7 +1015,6 @@
                 }
             }
 
-            // Apply Parsed Values to Form
             if (amount > 0) document.getElementById('inputTotalAmount').value = amount;
             if (approveNo) document.getElementById('inputApproveNo').value = approveNo;
             if (approveDate) document.getElementById('inputApproveDate').value = approveDate;
@@ -1112,25 +1030,15 @@
 
         function openNerpCopyModal() {
             const textarea = document.getElementById('nerpTsvTextarea');
-            
-            // Build NERP Header and TSV Content
             const header = ['승인일자', '계정코드', '계정명', '카드명', '승인번호', '가맹점명', '사업자번호', '총금액', '공급가액', '부가세', '공제구분', '적요'].join('\t');
             
             const rows = expenses.map(e => {
                 const acc = accounts.find(a => a.id === e.accountId) || { code: '000', name: '미지정' };
                 return [
-                    e.approveDate,
-                    acc.code,
-                    acc.name,
-                    e.cardName,
-                    e.approveNo,
-                    e.merchantName || '기본',
-                    e.merchantBizNo || '000-00-00000',
-                    e.totalAmount,
-                    e.supplyValue,
-                    e.vatAmount,
-                    e.vatType === 'DEDUCTIBLE' ? '공제' : '불공제',
-                    e.memo || '기본'
+                    e.approveDate, acc.code, acc.name, e.cardName, e.approveNo,
+                    e.merchantName || '기본', e.merchantBizNo || '000-00-00000',
+                    e.totalAmount, e.supplyValue, e.vatAmount,
+                    e.vatType === 'DEDUCTIBLE' ? '공제' : '불공제', e.memo || '기본'
                 ].join('\t');
             });
 
@@ -1153,30 +1061,20 @@
             }
 
             const headers = ['승인일자', '계정코드', '계정명', '카드명', '승인번호', '가맹점명', '사업자번호', '총금액', '공급가액', '부가세', '공제구분', '예산반영여부', '적요'];
-            
             const csvRows = [headers.join(',')];
 
             expenses.forEach(e => {
                 const acc = accounts.find(a => a.id === e.accountId) || { code: '000', name: '미지정' };
-                const row = [
-                    `"${e.approveDate}"`,
-                    `"${acc.code}"`,
-                    `"${acc.name}"`,
-                    `"${e.cardName}"`,
-                    `"${e.approveNo}"`,
-                    `"${e.merchantName || '기본'}"`,
-                    `"${e.merchantBizNo || '000-00-00000'}"`,
-                    e.totalAmount,
-                    e.supplyValue,
-                    e.vatAmount,
+                csvRows.push([
+                    `"${e.approveDate}"`, `"${acc.code}"`, `"${acc.name}"`, `"${e.cardName}"`, `"${e.approveNo}"`,
+                    `"${e.merchantName || '기본'}"`, `"${e.merchantBizNo || '000-00-00000'}"`,
+                    e.totalAmount, e.supplyValue, e.vatAmount,
                     `"${e.vatType === 'DEDUCTIBLE' ? '공제' : '불공제'}"`,
                     `"${e.budgetReflected ? '반영' : '미반영'}"`,
                     `"${(e.memo || '기본').replace(/"/g, '""')}"`
-                ];
-                csvRows.push(row.join(','));
+                ].join(','));
             });
 
-            // Add UTF-8 BOM (\uFEFF) for Korean Excel compatibility
             const csvContent = "\uFEFF" + csvRows.join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -1187,16 +1085,21 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
             showToast("CSV 파일 다운로드가 시작되었습니다.");
         }
 
-        function saveGasSettings() {
-            const url = document.getElementById('gasUrlInput').value.trim();
-            gasScriptUrl = url;
-            localStorage.setItem('NERP_GAS_URL_v3', gasScriptUrl);
-            updateSyncBadge(!!gasScriptUrl, gasScriptUrl ? 'Google Sheet 연결됨' : 'LocalStorage 동기화됨');
+        function saveCloudSettings() {
+            const binId = document.getElementById('jsonbinIdInput').value.trim();
+            const apiKey = document.getElementById('jsonbinKeyInput').value.trim();
+            
+            cloudConfig.binId = binId;
+            cloudConfig.apiKey = apiKey;
+
+            localStorage.setItem('NERP_BIN_ID', binId);
+            localStorage.setItem('NERP_API_KEY', apiKey);
+
             closeModal('cloudModal');
+            loadDataFromDB();
             showToast("클라우드 연동 설정이 저장되었습니다.");
         }
 
@@ -1211,29 +1114,16 @@
             }
         }
 
-        function openModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function formatKrw(num) {
-            return (num || 0).toLocaleString('ko-KR') + ' 원';
-        }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function formatKrw(num) { return (num || 0).toLocaleString('ko-KR') + ' 원'; }
 
         function formatBizNumber(input) {
             let val = input.value.replace(/[^0-9]/g, '');
             if (val.length > 10) val = val.substring(0, 10);
-            
-            if (val.length > 5) {
-                input.value = `${val.substring(0, 3)}-${val.substring(3, 5)}-${val.substring(5)}`;
-            } else if (val.length > 3) {
-                input.value = `${val.substring(0, 3)}-${val.substring(3)}`;
-            } else {
-                input.value = val;
-            }
+            if (val.length > 5) input.value = `${val.substring(0, 3)}-${val.substring(3, 5)}-${val.substring(5)}`;
+            else if (val.length > 3) input.value = `${val.substring(0, 3)}-${val.substring(3)}`;
+            else input.value = val;
         }
 
         function showToast(message) {
@@ -1241,11 +1131,7 @@
             toast.className = "fixed bottom-5 right-5 z-50 bg-slate-800 text-amber-400 px-4 py-3 rounded-lg shadow-2xl border border-amber-500/30 text-xs font-bold flex items-center gap-2 transition-all transform translate-y-2 opacity-0";
             toast.innerHTML = `<i class="fa-solid fa-circle-check text-amber-500 text-sm"></i> ${message}`;
             document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
-
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-2');
                 setTimeout(() => toast.remove(), 300);
