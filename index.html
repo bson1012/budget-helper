@@ -178,7 +178,7 @@
             <button onclick="openModal('budgetModal')" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-2 transition">
                 <i class="fa-solid fa-sliders text-amber-400"></i> 계정/예산 설정
             </button>
-            <button onclick="openModal('cloudModal')" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-2 transition">
+            <button onclick="requestCloudModalPassword()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-2 transition">
                 <i class="fa-solid fa-cloud text-sky-400"></i> DB/클라우드 설정
             </button>
             <button onclick="resetToDefaultData()" class="p-2 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-400 border border-slate-700 rounded-lg text-xs transition" title="초기화">
@@ -235,18 +235,23 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-800">
                 <div class="flex items-center gap-2 font-bold text-sm text-slate-200">
                     <i class="fa-solid fa-file-circle-plus text-amber-500"></i>
-                    <span>신규 경비 전표 입력</span>
+                    <span id="formTitleText">신규 경비 전표 입력</span>
                 </div>
-                <div class="flex items-center gap-2 bg-slate-900/70 px-3 py-1.5 rounded-lg border border-slate-800">
-                    <span class="text-xs font-semibold text-slate-300">예산 반영</span>
-                    <label class="ha-switch">
-                        <input type="checkbox" id="inputBudgetReflected" checked>
-                        <span class="ha-switch-slider"></span>
-                    </label>
+                <div class="flex items-center gap-3">
+                    <button type="button" id="cancelEditBtn" onclick="resetExpenseForm()" class="hidden text-xs text-red-400 hover:underline">수정 취소</button>
+                    <div class="flex items-center gap-2 bg-slate-900/70 px-3 py-1.5 rounded-lg border border-slate-800">
+                        <span class="text-xs font-semibold text-slate-300">예산 반영</span>
+                        <label class="ha-switch">
+                            <input type="checkbox" id="inputBudgetReflected" checked>
+                            <span class="ha-switch-slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
             <form id="expenseForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="editingExpenseId" value="">
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">처리 계정 <span class="text-amber-500">*</span></label>
@@ -332,7 +337,7 @@
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-lg shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition active:scale-[0.99]">
+                    <button type="submit" id="submitBtnText" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-lg shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition active:scale-[0.99]">
                         <i class="fa-solid fa-plus-circle"></i> NERP 경비 전표 추가 저장하기
                     </button>
                 </div>
@@ -396,7 +401,7 @@
                         <th class="p-3 text-right">부가세</th>
                         <th class="p-3 text-center">부가세 구분</th>
                         <th class="p-3">적요 / 구매내역</th>
-                        <th class="p-3 text-center w-16">관리</th>
+                        <th class="p-3 text-center w-20">관리</th>
                     </tr>
                 </thead>
                 <tbody id="expenseTableBody" class="divide-y divide-slate-800/80">
@@ -405,7 +410,7 @@
         </div>
     </section>
 
-    <!-- Modal: Budget & Account Settings (Modified with Budget Limit Editors) -->
+    <!-- Modal: Budget & Account Settings -->
     <div id="budgetModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="ha-card w-full max-w-2xl p-6 space-y-5 border-amber-500/50 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -463,6 +468,32 @@
         </div>
     </div>
 
+    <!-- Modal: Cloud Password Verification -->
+    <div id="cloudPasswordModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="ha-card w-full max-w-sm p-6 space-y-4 border-sky-500/50 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2 text-sky-400 font-bold text-sm">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>관리자 비밀번호 확인</span>
+                </div>
+                <button onclick="closeModal('cloudPasswordModal')" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <p class="text-xs text-slate-400">
+                클라우드 DB 설정을 변경하려면 설정 비밀번호를 입력하세요.
+            </p>
+
+            <div>
+                <input type="password" id="cloudPasswordInput" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter') verifyCloudPassword()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button onclick="verifyCloudPassword()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-lg">확인</button>
+                <button onclick="closeModal('cloudPasswordModal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg">취소</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Cloud Sync / JSONBin Setup -->
     <div id="cloudModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="ha-card w-full max-w-md p-6 space-y-4 border-sky-500/50 shadow-2xl">
@@ -475,17 +506,17 @@
             </div>
 
             <p class="text-xs text-slate-400 leading-relaxed">
-                모바일과 랩탑에서 실시간 데이터를 공유하려면 무료 <strong class="text-white">JSONBin.io</strong> Bin ID와 Master Key를 입력하세요. (미입력 시 LocalStorage 모드로 작동합니다.)
+                기본 JSONBin 클라우드 DB 정보가 내장되어 있어 기본적으로 자동 동기화됩니다.
             </p>
 
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1">JSONBin Bin ID</label>
-                    <input type="text" id="jsonbinIdInput" placeholder="예: 650a... (Bin ID)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
+                    <input type="text" id="jsonbinIdInput" placeholder="Bin ID" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">JSONBin Master Key ($2a$...)</label>
-                    <input type="password" id="jsonbinKeyInput" placeholder="$2a$10$..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">JSONBin Master Key</label>
+                    <input type="password" id="jsonbinKeyInput" placeholder="Master Key" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
                 </div>
             </div>
 
@@ -526,19 +557,32 @@
         let accounts = [];
         let expenses = [];
         
+        // 기본 내장 DB 정보 (비밀번호 및 마스터키는 Base64 난독화 처리)
+        const DEFAULT_BIN_ID = '6ab95feaffd5d160533528ca';
+        const DEFAULT_ENCODED_KEY = 'JDJhJDEwJENZNXd5QzF5VDF3L0NscmVPMlp4aE82dXpsSXRFMVdqRmlCMS9EbjY1RzRadGdyLjRBeGZh';
+        const DEFAULT_ENCODED_PW = 'OTAwNTE0'; // "900514"
+        
+        let decodedApiKey = '';
+        let decodedPassword = '';
+        try {
+            decodedApiKey = atob(DEFAULT_ENCODED_KEY);
+            decodedPassword = atob(DEFAULT_ENCODED_PW);
+        } catch (e) {
+            decodedApiKey = '';
+            decodedPassword = '900514';
+        }
+
         let cloudConfig = {
-            binId: localStorage.getItem('NERP_BIN_ID') || '',
-            apiKey: localStorage.getItem('NERP_API_KEY') || ''
+            binId: localStorage.getItem('NERP_BIN_ID') || DEFAULT_BIN_ID,
+            apiKey: localStorage.getItem('NERP_API_KEY') || decodedApiKey
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('inputApproveDate').value = todayStr;
 
-            if (cloudConfig.binId) {
-                document.getElementById('jsonbinIdInput').value = cloudConfig.binId;
-                document.getElementById('jsonbinKeyInput').value = cloudConfig.apiKey;
-            }
+            document.getElementById('jsonbinIdInput').value = cloudConfig.binId;
+            document.getElementById('jsonbinKeyInput').value = cloudConfig.apiKey;
 
             await loadDataFromDB();
 
@@ -553,6 +597,24 @@
                 }, 10000);
             }
         });
+
+        function requestCloudModalPassword() {
+            document.getElementById('cloudPasswordInput').value = '';
+            openModal('cloudPasswordModal');
+            setTimeout(() => document.getElementById('cloudPasswordInput').focus(), 100);
+        }
+
+        function verifyCloudPassword() {
+            const inputPw = document.getElementById('cloudPasswordInput').value.trim();
+            if (inputPw === decodedPassword) {
+                closeModal('cloudPasswordModal');
+                openModal('cloudModal');
+            } else {
+                showToast("비밀번호가 올바르지 않습니다.");
+                document.getElementById('cloudPasswordInput').value = '';
+                document.getElementById('cloudPasswordInput').focus();
+            }
+        }
 
         async function loadDataFromDB(isBackground = false) {
             if (cloudConfig.binId && cloudConfig.apiKey) {
@@ -575,7 +637,7 @@
                         }
                     }
                 } catch (e) {
-                    console.error("Cloud fetch error, fallback to local:", e);
+                    console.error("Cloud fetch error:", e);
                 }
             }
 
@@ -585,7 +647,6 @@
 
         async function saveDataToDB() {
             const payload = { accounts, expenses };
-            
             localStorage.setItem('NERP_ACCOUNTS_v3', JSON.stringify(accounts));
             localStorage.setItem('NERP_EXPENSES_v3', JSON.stringify(expenses));
 
@@ -865,7 +926,10 @@
                         }
                     </td>
                     <td class="p-3 max-w-xs truncate text-slate-300" title="${exp.memo}">${exp.memo || '기본'}</td>
-                    <td class="p-3 text-center whitespace-nowrap">
+                    <td class="p-3 text-center whitespace-nowrap space-x-1">
+                        <button onclick="editExpense('${exp.id}')" class="p-1.5 text-sky-400 hover:text-sky-300 transition" title="수정">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
                         <button onclick="deleteExpense('${exp.id}')" class="p-1.5 text-slate-500 hover:text-red-400 transition" title="삭제">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
@@ -873,6 +937,61 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        function editExpense(id) {
+            const exp = expenses.find(e => e.id === id);
+            if (!exp) return;
+
+            document.getElementById('editingExpenseId').value = exp.id;
+            document.getElementById('inputAccountId').value = exp.accountId;
+            
+            const cardSelect = document.getElementById('inputCardName');
+            const cardOpts = Array.from(cardSelect.options).map(o => o.value);
+            if (cardOpts.includes(exp.cardName)) {
+                cardSelect.value = exp.cardName;
+                document.getElementById('inputCardDirect').classList.add('hidden');
+            } else {
+                cardSelect.value = 'DIRECT_INPUT';
+                const directInput = document.getElementById('inputCardDirect');
+                directInput.classList.remove('hidden');
+                directInput.value = exp.cardName;
+            }
+
+            document.getElementById('inputApproveDate').value = exp.approveDate;
+            document.getElementById('inputApproveNo').value = exp.approveNo;
+            document.getElementById('inputTotalAmount').value = exp.totalAmount;
+
+            const vatRadios = document.querySelectorAll('input[name="vatType"]');
+            vatRadios.forEach(r => {
+                if (r.value === exp.vatType) r.checked = true;
+            });
+
+            document.getElementById('inputMerchantName').value = exp.merchantName === '기본' ? '' : exp.merchantName;
+            document.getElementById('inputMerchantBizNo').value = exp.merchantBizNo === '000-00-00000' ? '' : exp.merchantBizNo;
+            document.getElementById('inputMemo').value = exp.memo === '기본' ? '' : exp.memo;
+            document.getElementById('inputBudgetReflected').checked = exp.budgetReflected;
+
+            document.getElementById('formTitleText').textContent = '경비 전표 수정 모드';
+            document.getElementById('submitBtnText').innerHTML = `<i class="fa-solid fa-check"></i> 수정 사항 저장하기`;
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            calculateVatAndSupply();
+            window.scrollTo({ top: 150, behavior: 'smooth' });
+        }
+
+        function resetExpenseForm() {
+            document.getElementById('expenseForm').reset();
+            document.getElementById('editingExpenseId').value = '';
+            document.getElementById('inputBudgetReflected').checked = true;
+            document.getElementById('formTitleText').textContent = '신규 경비 전표 입력';
+            document.getElementById('submitBtnText').innerHTML = `<i class="fa-solid fa-plus-circle"></i> NERP 경비 전표 추가 저장하기`;
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('inputCardDirect').classList.add('hidden');
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('inputApproveDate').value = todayStr;
+            calculateVatAndSupply();
         }
 
         function toggleExpenseBudget(id, isReflected) {
@@ -906,37 +1025,51 @@
                 cardName = document.getElementById('inputCardDirect').value.trim() || '기타카드';
             }
 
-            const newExp = {
-                id: 'exp_' + Date.now(),
-                accountId: document.getElementById('inputAccountId').value,
-                cardName: cardName,
-                approveDate: document.getElementById('inputApproveDate').value,
-                approveNo: document.getElementById('inputApproveNo').value.trim() || '00000000',
-                vatType: calc.vatType,
-                totalAmount: calc.total,
-                supplyValue: calc.supply,
-                vatAmount: calc.vat,
-                deductAmount: calc.deduct,
-                merchantName: document.getElementById('inputMerchantName').value.trim() || '기본',
-                merchantBizNo: document.getElementById('inputMerchantBizNo').value.trim() || '000-00-00000',
-                memo: document.getElementById('inputMemo').value.trim() || '기본',
-                budgetReflected: document.getElementById('inputBudgetReflected').checked
-            };
+            const editingId = document.getElementById('editingExpenseId').value;
 
-            expenses.unshift(newExp);
+            if (editingId) {
+                const exp = expenses.find(e => e.id === editingId);
+                if (exp) {
+                    exp.accountId = document.getElementById('inputAccountId').value;
+                    exp.cardName = cardName;
+                    exp.approveDate = document.getElementById('inputApproveDate').value;
+                    exp.approveNo = document.getElementById('inputApproveNo').value.trim() || '00000000';
+                    exp.vatType = calc.vatType;
+                    exp.totalAmount = calc.total;
+                    exp.supplyValue = calc.supply;
+                    exp.vatAmount = calc.vat;
+                    exp.deductAmount = calc.deduct;
+                    exp.merchantName = document.getElementById('inputMerchantName').value.trim() || '기본';
+                    exp.merchantBizNo = document.getElementById('inputMerchantBizNo').value.trim() || '000-00-00000';
+                    exp.memo = document.getElementById('inputMemo').value.trim() || '기본';
+                    exp.budgetReflected = document.getElementById('inputBudgetReflected').checked;
+                    showToast("경비 전표가 수정되었습니다.");
+                }
+            } else {
+                const newExp = {
+                    id: 'exp_' + Date.now(),
+                    accountId: document.getElementById('inputAccountId').value,
+                    cardName: cardName,
+                    approveDate: document.getElementById('inputApproveDate').value,
+                    approveNo: document.getElementById('inputApproveNo').value.trim() || '00000000',
+                    vatType: calc.vatType,
+                    totalAmount: calc.total,
+                    supplyValue: calc.supply,
+                    vatAmount: calc.vat,
+                    deductAmount: calc.deduct,
+                    merchantName: document.getElementById('inputMerchantName').value.trim() || '기본',
+                    merchantBizNo: document.getElementById('inputMerchantBizNo').value.trim() || '000-00-00000',
+                    memo: document.getElementById('inputMemo').value.trim() || '기본',
+                    budgetReflected: document.getElementById('inputBudgetReflected').checked
+                };
+                expenses.unshift(newExp);
+                showToast("신규 경비 전표가 등록되었습니다.");
+            }
+
             saveDataToDB();
-
             renderAccountTiles();
             renderExpensesTable();
-
-            document.getElementById('inputTotalAmount').value = '';
-            document.getElementById('inputApproveNo').value = '';
-            document.getElementById('inputMerchantName').value = '';
-            document.getElementById('inputMerchantBizNo').value = '';
-            document.getElementById('inputMemo').value = '';
-            calculateVatAndSupply();
-
-            showToast("신규 경비 전표가 등록되었습니다.");
+            resetExpenseForm();
         }
 
         function deleteExpense(id) {
